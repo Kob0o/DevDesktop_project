@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ArrowLeftIcon, StarIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
-import { showNotification, copyToClipboard, setupContextMenu } from '../services/systemService';
+import { showNotification, copyToClipboard, showContextMenu } from '../services/systemService';
 import { exportPlayerToPDF } from '../services/pdfService';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -20,11 +20,14 @@ function PlayerDetail() {
 
   useEffect(() => {
     fetchPlayerDetails();
-
-    // Configuration du menu contextuel
-    const cleanup = setupContextMenu(id, player?.name);
-    return () => cleanup();
   }, [id]);
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    if (player) {
+      showContextMenu(id, player.name);
+    }
+  };
 
   const fetchPlayerDetails = async () => {
     try {
@@ -129,7 +132,7 @@ function PlayerDetail() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 py-8" onContextMenu={handleContextMenu}>
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate('/dashboard')}

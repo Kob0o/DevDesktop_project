@@ -1,46 +1,75 @@
 // Importation conditionnelle d'Electron
-let ipcRenderer;
+let electron;
 try {
-  ipcRenderer = window.require('electron').ipcRenderer;
+  electron = window.electron;
+  console.log('Electron API disponible');
 } catch (error) {
-  // Fallback pour le développement
-  ipcRenderer = {
-    invoke: async () => false,
-    send: () => {},
-  };
+  console.warn('Electron non disponible, utilisation du mode web:', error);
 }
 
 // Gestion des notifications
-export function showNotification(title, body) {
-  if ('Notification' in window) {
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body });
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
+export async function showNotification(title, body) {
+  try {
+    if (electron) {
+      electron.showNotification({ title, body });
+    } else {
+      // Fallback pour le web
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body });
+      } else if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
         if (permission === 'granted') {
           new Notification(title, { body });
         }
-      });
+      }
     }
+  } catch (error) {
+    console.error('Erreur lors de l\'affichage de la notification:', error);
   }
 }
 
 // Gestion du clipboard
 export async function copyToClipboard(text) {
   try {
-    await navigator.clipboard.writeText(text);
+    if (electron) {
+      await electron.copyToClipboard(text);
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
     return true;
   } catch (error) {
-    console.error('Erreur lors de la copie dans le presse-papier:', error);
+    console.error('Erreur lors de la copie:', error);
     return false;
   }
 }
 
-// Gestion du système de fichiers
+// Gestion des fichiers
 export async function saveFile(content, filename) {
   try {
-    const result = await ipcRenderer.invoke('save-file', { content, filename });
-    return result;
+    if (electron) {
+      // Convertir le Blob en ArrayBuffer
+      const arrayBuffer = await content.arrayBuffer();
+      
+      // Convertir en Uint8Array
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Convertir en array normal pour la transmission
+      const normalArray = Array.from(uint8Array);
+      
+      return await electron.saveFile(normalArray, filename);
+    } else {
+      // Fallback pour le web
+      const blob = new Blob([content], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return true;
+    }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde du fichier:', error);
     return false;
@@ -49,52 +78,142 @@ export async function saveFile(content, filename) {
 
 // Gestion du menu contextuel
 export function setupContextMenu(playerId, playerName) {
-  const handleContextMenu = (e) => {
-    e.preventDefault();
-    ipcRenderer.send('show-context-menu', { playerId, playerName });
-  };
+  try {
+    if (electron) {
+      electron.showContextMenu({ playerId, playerName });
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'affichage du menu contextuel:', error);
+  }
+}
 
-  document.addEventListener('contextmenu', handleContextMenu);
-  return () => document.removeEventListener('contextmenu', handleContextMenu);
+// Alias pour la compatibilité
+export const showContextMenu = setupContextMenu;
+
+// Gestion du service en arrière-plan
+export function startBackgroundService() {
+  try {
+    if (electron) {
+      electron.startBackgroundService();
+    }
+  } catch (error) {
+    console.error('Erreur lors du démarrage du service en arrière-plan:', error);
+  }
+}
+
+export function stopBackgroundService() {
+  try {
+    if (electron) {
+      electron.stopBackgroundService();
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'arrêt du service en arrière-plan:', error);
+  }
+}
+
+// Gestion des événements
+export function setupEventListeners() {
+  try {
+    if (electron) {
+      // Service en arrière-plan
+      electron.onBackgroundServiceTick((data) => {
+        console.log('Background service tick:', data);
+        // Ici, vous pouvez ajouter la logique pour gérer les ticks du service
+      });
+
+      // Favoris
+      electron.onAddToFavorites((playerId) => {
+        console.log('Player added to favorites:', playerId);
+        // Ici, vous pouvez ajouter la logique pour gérer l'ajout aux favoris
+      });
+
+      // Détails du joueur
+      electron.onViewPlayerDetails((playerId) => {
+        console.log('View player details:', playerId);
+        // Ici, vous pouvez ajouter la logique pour afficher les détails du joueur
+      });
+
+      // Suppression du joueur
+      electron.onDeletePlayer((playerId) => {
+        console.log('Delete player:', playerId);
+        // Ici, vous pouvez ajouter la logique pour supprimer le joueur
+      });
+    }
+  } catch (error) {
+    console.error('Erreur lors de la configuration des écouteurs d\'événements:', error);
+  }
+}
+
+// Initialisation
+export function init() {
+  try {
+    console.log('Initialisation du service système...');
+    setupEventListeners();
+    startBackgroundService();
+    console.log('Service système initialisé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'initialisation du service système:', error);
+  }
 }
 
 // Gestion du thème
 export function toggleDarkMode() {
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('darkMode', isDark);
-  return isDark;
+  try {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('darkMode', isDark);
+    return isDark;
+  } catch (error) {
+    console.error('Erreur lors du changement de thème:', error);
+    return false;
+  }
 }
 
 export function initDarkMode() {
-  const isDark = localStorage.getItem('darkMode') === 'true' ||
-    (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  
-  if (isDark) {
-    document.documentElement.classList.add('dark');
+  try {
+    const isDark = localStorage.getItem('darkMode') === 'true' ||
+      (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    }
+    return isDark;
+  } catch (error) {
+    console.error('Erreur lors de l\'initialisation du thème:', error);
+    return false;
   }
-  return isDark;
 }
 
 // Gestion des mises à jour automatiques
 export function checkForUpdates() {
-  ipcRenderer.send('check-for-updates');
+  if (electron.checkForUpdates) {
+    electron.checkForUpdates();
+  }
 }
 
 // Gestion des raccourcis clavier
 export function setupKeyboardShortcuts() {
-  const handleKeyPress = (e) => {
-    // Ctrl/Cmd + S pour sauvegarder
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
-      ipcRenderer.send('save-current');
-    }
-    // Ctrl/Cmd + F pour rechercher
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-      e.preventDefault();
-      ipcRenderer.send('focus-search');
-    }
-  };
+  try {
+    const handleKeyPress = (e) => {
+      // Ctrl/Cmd + S pour sauvegarder
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (electron?.saveCurrent) {
+          electron.saveCurrent();
+        }
+      }
+      // Ctrl/Cmd + F pour rechercher
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        if (electron?.focusSearch) {
+          electron.focusSearch();
+        }
+      }
+    };
 
-  document.addEventListener('keydown', handleKeyPress);
-  return () => document.removeEventListener('keydown', handleKeyPress);
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  } catch (error) {
+    console.error('Erreur lors de la configuration des raccourcis clavier:', error);
+    return () => {};
+  }
 } 

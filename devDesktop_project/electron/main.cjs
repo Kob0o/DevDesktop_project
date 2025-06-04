@@ -1,95 +1,129 @@
-const { app, BrowserWindow, ipcMain, Menu, Tray, Notification, clipboard, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
 
 let mainWindow;
 let tray = null;
 
+function createTray() {
+  const iconPath = path.join(__dirname, '..', 'public', 'icon.png');
+  tray = new Tray(iconPath);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { 
+      label: 'Afficher l\'application', 
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+        }
+      }
+    },
+    { 
+      label: 'Quitter', 
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+
+  tray.setToolTip('ScoutMaster');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    if (mainWindow) {
+      mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
+    }
+  });
+}
+
 function createWindow() {
+  console.log('Creating main window...');
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: path.join(__dirname, '..', 'public', 'icon.png'),
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
-    },
+      preload: path.join(__dirname, 'preload.cjs')
+    }
   });
 
   // En développement, charge l'URL de développement Vite
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
+    const port = process.env.VITE_PORT || 5173;
+    console.log(`Loading development URL: http://localhost:${port}`);
+    mainWindow.loadURL(`http://localhost:${port}`);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(
-      path.resolve(__dirname, "..", "dist", "index.html")
-    );
+    // En production, charge le fichier index.html depuis le bon chemin
+    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+    console.log(`Loading production file: ${indexPath}`);
+    mainWindow.loadFile(indexPath).catch(err => {
+      console.error('Error loading index.html:', err);
+      // Fallback au chemin alternatif si le premier échoue
+      const altPath = path.join(process.resourcesPath, 'app.asar', 'dist', 'index.html');
+      console.log(`Trying alternative path: ${altPath}`);
+      mainWindow.loadFile(altPath).catch(err2 => {
+        console.error('Error loading from alternative path:', err2);
+      });
+    });
   }
-
-  // Gestion des redirections OAuth
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    // Gérer les redirections OAuth
-    if (url.includes('/auth/callback')) {
-      event.preventDefault();
-      mainWindow.loadURL(url);
-    }
-  });
-
-  // Gérer les nouvelles fenêtres (pour l'authentification OAuth)
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.includes('accounts.google.com')) {
-      return { action: 'allow' };
-    }
-    return { action: 'deny' };
-  });
-
-  // Gestion du clipboard
-  ipcMain.handle('copy-to-clipboard', async (event, text) => {
-    await clipboard.writeText(text);
-  });
 
   // Gestion du système de fichiers
   ipcMain.handle('save-file', async (event, { content, filename }) => {
-    const { filePath } = await dialog.showSaveDialog({
-      defaultPath: filename,
-      filters: [
-        { name: 'Text Files', extensions: ['txt'] },
-        { name: 'JSON Files', extensions: ['json'] },
-        { name: 'PDF Files', extensions: ['pdf'] }
-      ]
-    });
-    if (filePath) {
-      await fs.writeFile(filePath, content);
-      return true;
+    try {
+      const { filePath } = await dialog.showSaveDialog(mainWindow, {
+        defaultPath: filename,
+        filters: [
+          { name: 'PDF Files', extensions: ['pdf'] }
+        ]
+      });
+
+      if (filePath) {
+        const buffer = Buffer.from(content);
+        await fs.writeFile(filePath, buffer);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error saving file:', error);
+      return false;
     }
-    return false;
   });
 
-  // Création du menu contextuel
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Ajouter aux favoris', click: () => mainWindow.webContents.send('add-to-favorites') },
-    { label: 'Ouvrir profil vidéo', click: () => mainWindow.webContents.send('open-video-profile') },
-    { type: 'separator' },
-    { label: 'Quitter', click: () => app.quit() }
-  ]);
-
-  // Création du tray icon
-  const iconPath = path.join(__dirname, '../public/icon.png');
-  try {
-    tray = new Tray(iconPath);
-    tray.setToolTip('ScoutMaster');
-    tray.setContextMenu(contextMenu);
-  } catch (err) {
-    console.error('Erreur lors de la création du tray icon:', err);
-  }
-
-  // Gestion des notifications système
-  ipcMain.on('show-notification', (event, { title, body }) => {
-    new Notification({ title, body }).show();
+  // Gestion de la fermeture de la fenêtre
+  mainWindow.on('close', (event) => {
+    if (!app.isQuitting) {
+      event.preventDefault();
+      mainWindow.hide();
+      return false;
+    }
+    return true;
   });
 }
 
-app.whenReady().then(createWindow);
+// Configuration du lancement au démarrage pour macOS
+function setAutoLaunch(enabled) {
+  if (process.platform === 'darwin') {
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      name: 'ScoutMaster',
+      path: app.getPath('exe'),
+      args: []
+    });
+  }
+}
+
+app.whenReady().then(() => {
+  console.log('App is ready, creating window...');
+  createWindow();
+  createTray();
+  setAutoLaunch(true);
+}).catch(error => {
+  console.error('Error during app initialization:', error);
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -101,4 +135,9 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Gestion de la fermeture propre de l'application
+app.on('before-quit', () => {
+  app.isQuitting = true;
 }); 

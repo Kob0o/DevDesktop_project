@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -8,32 +9,60 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 function Login() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
 
-  const handleGoogleLogin = async () => {
+  const handleAuth = async (e) => {
+    e.preventDefault();
     try {
       setLoading(true);
       
-      // Déterminer l'URL de redirection en fonction de l'environnement
-      const isDev = process.env.NODE_ENV === 'development';
-      const redirectUrl = isDev 
-        ? 'http://localhost:5173/auth/callback'
-        : 'http://localhost:3000/auth/callback';
+      if (isSignUp) {
+        // Inscription
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin
+          }
+        });
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
+        if (error) throw error;
+        
+        if (data?.user?.identities?.length === 0) {
+          toast.error('Cet email est déjà utilisé');
+          return;
+        }
 
-      if (error) throw error;
+        toast.success('Inscription réussie ! Vérifiez votre email pour confirmer votre compte.');
+      } else {
+        // Connexion
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          if (error.message === 'Invalid login credentials') {
+            toast.error('Email ou mot de passe incorrect');
+          } else if (error.message.includes('Email not confirmed')) {
+            toast.error('Veuillez confirmer votre email avant de vous connecter');
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+
+        if (data?.user) {
+          toast.success('Connexion réussie !');
+          navigate('/dashboard');
+        }
+      }
     } catch (error) {
-      toast.error('Erreur lors de la connexion avec Google');
-      console.error('Erreur de connexion:', error.message);
+      console.error('Erreur:', error);
+      toast.error(error.message || `Erreur lors de l'${isSignUp ? 'inscription' : 'authentification'}`);
     } finally {
       setLoading(false);
     }
@@ -47,32 +76,63 @@ function Login() {
             ScoutMaster
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Suivez vos joueurs de football préférés
+            {isSignUp ? 'Créez votre compte' : 'Connectez-vous à votre compte'}
           </p>
         </div>
-        <div className="mt-8 space-y-6">
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-            ) : (
-              <>
-                <svg
-                  className="w-5 h-5 mr-2"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
-                </svg>
-                Se connecter avec Google
-              </>
-            )}
-          </button>
-          <button onClick={() => {throw new Error("This is your first error!");}}>Break the world</button>;
-        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleAuth}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Email"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">Mot de passe</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Mot de passe"
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+              ) : (
+                isSignUp ? 'S\'inscrire' : 'Se connecter'
+              )}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-primary-600 hover:text-primary-500"
+            >
+              {isSignUp ? 'Déjà un compte ? Connectez-vous' : 'Pas de compte ? Inscrivez-vous'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

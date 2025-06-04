@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { PlusIcon, PencilIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { exportTeamToPDF } from '../services/pdfService';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 function TeamPage() {
+  const navigate = useNavigate();
   const [teams, setTeams] = useState([]);
+  const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchTeams();
+    fetchPlayers();
   }, []);
 
   const fetchTeams = async () => {
@@ -37,6 +41,24 @@ function TeamPage() {
     }
   };
 
+  const fetchPlayers = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (error) {
+      toast.error('Erreur lors du chargement des joueurs');
+      console.error('Erreur:', error.message);
+    }
+  };
+
   const handleDeleteTeam = async (teamId) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette équipe ?')) return;
 
@@ -55,6 +77,17 @@ function TeamPage() {
     }
   };
 
+  const handleExportPDF = async (team) => {
+    try {
+      const teamPlayers = players.filter(p => p.team === team.name);
+      await exportTeamToPDF(team, teamPlayers);
+      toast.success('PDF exporté avec succès');
+    } catch (error) {
+      console.error('Erreur lors de l\'export PDF:', error);
+      toast.error('Erreur lors de l\'export PDF');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -69,13 +102,13 @@ function TeamPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Mes Équipes
         </h1>
-        <Link
-          to="/team/create"
+        <button
+          onClick={() => navigate('/team/create')}
           className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Créer une équipe
-        </Link>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -139,6 +172,22 @@ function TeamPage() {
 
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {Object.keys(team.formation).length} joueurs
+            </div>
+
+            <div className="mt-4 flex justify-between items-center">
+              <button
+                onClick={() => handleExportPDF(team)}
+                className="text-blue-500 hover:text-blue-600 transition-colors"
+                title="Exporter en PDF"
+              >
+                <DocumentArrowDownIcon className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => handleDeleteTeam(team.id)}
+                className="text-red-500 hover:text-red-600 transition-colors"
+              >
+                Supprimer
+              </button>
             </div>
           </div>
         ))}
