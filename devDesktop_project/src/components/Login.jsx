@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,37 @@ function Login() {
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
+  const [autoLaunch, setAutoLaunch] = useState(false);
+  const [autoLaunchLoading, setAutoLaunchLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    if (window.electron && window.electron.getAutoLaunchEnabled) {
+      window.electron.getAutoLaunchEnabled().then((enabled) => {
+        if (mounted) {
+          setAutoLaunch(!!enabled);
+          setAutoLaunchLoading(false);
+        }
+      });
+    } else {
+      setAutoLaunchLoading(false);
+    }
+    return () => { mounted = false; };
+  }, []);
+
+  const handleToggleAutoLaunch = async () => {
+    setAutoLaunchLoading(true);
+    try {
+      if (window.electron && window.electron.setAutoLaunchEnabled) {
+        const newState = await window.electron.setAutoLaunchEnabled(!autoLaunch);
+        setAutoLaunch(!!newState);
+      }
+    } catch (e) {
+      toast.error("Erreur lors du changement d'auto launch");
+    } finally {
+      setAutoLaunchLoading(false);
+    }
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -133,6 +164,22 @@ function Login() {
             </button>
           </div>
         </form>
+        <div className="mt-6 flex items-center justify-center">
+          <button
+            type="button"
+            onClick={handleToggleAutoLaunch}
+            disabled={autoLaunchLoading}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md border ${autoLaunch ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'} hover:bg-green-700 dark:bg-gray-700 dark:text-white`}
+          >
+            {autoLaunchLoading ? (
+              <span className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gray-600"></span>
+            ) : (
+              <>
+                {autoLaunch ? 'Désactiver le lancement automatique' : 'Activer le lancement automatique'}
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

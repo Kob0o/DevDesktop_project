@@ -6,64 +6,6 @@ classement. L'application utilise l'authentification Google via Supabase, et
 intègre des fonctionnalités système natives (notifications, menu contextuel,
 etc.) ainsi que plusieurs APIs navigateur.
 
-## Configuration
-
-1. Créez un projet sur [Supabase](https://supabase.com)
-2. Activez l'authentification Google dans les paramètres d'authentification
-3. Créez les tables suivantes dans votre base de données Supabase :
-
-```sql
--- Table des joueurs
-create table players (
-  id uuid default uuid_generate_v4() primary key,
-  user_id uuid references auth.users not null,
-  name text not null,
-  team text not null,
-  position text not null,
-  notes text,
-  is_favorite boolean default false,
-  player_image_url text, -- URL de la photo du joueur
-  team_image_url text,   -- URL du logo de l'équipe
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- Table des notes
-create table player_notes (
-  id uuid default uuid_generate_v4() primary key,
-  player_id uuid references players not null,
-  content text not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-```
-
-4. Créez un fichier `.env` à la racine du projet avec les variables suivantes :
-```
-VITE_SUPABASE_URL=votre_url_supabase
-VITE_SUPABASE_ANON_KEY=votre_clé_anon_supabase
-VITE_FOOTBALL_API_KEY=votre_clé_api_football
-```
-
-## Installation
-
-1. Installez les dépendances :
-```bash
-npm install
-```
-
-2. Lancez l'application en mode développement :
-```bash
-npm run dev
-```
-
-3. Pour lancer l'application Electron :
-```bash
-npm run electron:dev
-```
-
-4. Pour construire l'application :
-```bash
-npm run electron:build
-```
 
 ## Fonctionnalités
 
@@ -84,24 +26,22 @@ npm run electron:build
 - Electron
 - Tailwind CSS
 - Supabase
-- Football-data.org API
+
 📝 Cahier des charges – Application ScoutMaster
 1. Objectif
 Développer une application de bureau destinée à des passionnés de football, leur
 permettant de :
 Suivre des joueurs professionnels.
-Accéder à leurs statistiques via une API.
 Enregistrer des commentaires personnels.
-Organiser un classement personnel (top 10, favoris, etc.).
+Organiser un classement personnel (favoris).
 2. Technologies
 Frontend : React + tailwind
-Backend / Authentification : Supabase (Google Auth + base de données)
-API externe : football-data.org (ou équivalent)
+Backend / Authentification : Supabase (base de données)
 Application bureau : ElectronJS
 Base de données : Supabase
 3. Fonctionnalités principales
 3.1 Authentification (2 pts)
-Authentification via Google OAuth intégrée à Supabase.
+Authentification Supabase.
 3.2 CRUD (3 pts)
 Création, lecture, mise à jour et suppression de fiches joueurs personnalisées.
 Ajout de notes/commentaires sur chaque joueur.

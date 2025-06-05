@@ -38,26 +38,26 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-lg">
+    <nav className="bg-white dark:bg-dark-bg shadow-lg border-b border-gray-200 dark:border-football-green">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
+        <div className="flex justify-between h-16 items-center">
+          <div className="flex items-center gap-3">
             <Link
               to="/dashboard"
-              className="flex items-center text-xl font-bold text-primary-600 dark:text-primary-400"
+              className="flex items-center text-2xl font-extrabold text-gray-900 dark:text-white tracking-wide drop-shadow-md"
             >
               ScoutMaster
             </Link>
             <div className="ml-10 flex items-center space-x-4">
               <Link
                 to="/dashboard"
-                className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-700 dark:text-gray-200 hover:text-football-green dark:hover:text-football-yellow px-3 py-2 rounded-full text-base font-semibold transition-colors"
               >
                 Joueurs
               </Link>
               <Link
                 to="/team"
-                className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-700 dark:text-gray-200 hover:text-football-green dark:hover:text-football-yellow px-3 py-2 rounded-full text-base font-semibold transition-colors"
               >
                 Équipe
               </Link>
@@ -67,7 +67,7 @@ function Navbar() {
           <div className="flex items-center space-x-4">
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 rounded-full border border-football-green text-football-green hover:bg-football-green hover:text-white transition-colors"
             >
               {darkMode ? (
                 <SunIcon className="h-6 w-6" />
@@ -78,7 +78,7 @@ function Navbar() {
 
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="football-btn"
             >
               Déconnexion
             </button>

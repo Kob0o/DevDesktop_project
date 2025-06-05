@@ -1,9 +1,11 @@
 const { app, BrowserWindow, ipcMain, dialog, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
+const AutoLaunch = require('auto-launch');
 
 let mainWindow;
 let tray = null;
+let scoutAutoLauncher = null;
 
 function createTray() {
   const iconPath = path.join(__dirname, '..', 'public', 'icon.png');
@@ -106,13 +108,16 @@ function createWindow() {
 
 // Configuration du lancement au démarrage pour macOS
 function setAutoLaunch(enabled) {
-  if (process.platform === 'darwin') {
-    app.setLoginItemSettings({
-      openAtLogin: enabled,
+  if (!scoutAutoLauncher) {
+    scoutAutoLauncher = new AutoLaunch({
       name: 'ScoutMaster',
-      path: app.getPath('exe'),
-      args: []
+      path: process.execPath
     });
+  }
+  if (enabled) {
+    scoutAutoLauncher.enable().catch(err => console.error('AutoLaunch enable error:', err));
+  } else {
+    scoutAutoLauncher.disable().catch(err => console.error('AutoLaunch disable error:', err));
   }
 }
 
@@ -140,4 +145,40 @@ app.on('activate', () => {
 // Gestion de la fermeture propre de l'application
 app.on('before-quit', () => {
   app.isQuitting = true;
+});
+
+// Ajout des handlers IPC pour l'auto launch
+ipcMain.handle('get-auto-launch-enabled', async () => {
+  if (!scoutAutoLauncher) {
+    scoutAutoLauncher = new AutoLaunch({
+      name: 'ScoutMaster',
+      path: process.execPath
+    });
+  }
+  try {
+    return await scoutAutoLauncher.isEnabled();
+  } catch (err) {
+    console.error('Erreur get-auto-launch-enabled:', err);
+    return false;
+  }
+});
+
+ipcMain.handle('set-auto-launch-enabled', async (event, enabled) => {
+  if (!scoutAutoLauncher) {
+    scoutAutoLauncher = new AutoLaunch({
+      name: 'ScoutMaster',
+      path: process.execPath
+    });
+  }
+  try {
+    if (enabled) {
+      await scoutAutoLauncher.enable();
+    } else {
+      await scoutAutoLauncher.disable();
+    }
+    return await scoutAutoLauncher.isEnabled();
+  } catch (err) {
+    console.error('Erreur set-auto-launch-enabled:', err);
+    return false;
+  }
 }); 

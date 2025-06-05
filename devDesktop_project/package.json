@@ -25,6 +25,7 @@
     "@sentry/react": "^9.26.0",
     "@sentry/vite-plugin": "^3.5.0",
     "@supabase/supabase-js": "^2.49.4",
+    "auto-launch": "^5.0.6",
     "dotenv": "^16.5.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^5.0.2",

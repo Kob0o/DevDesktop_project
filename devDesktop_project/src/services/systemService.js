@@ -118,25 +118,21 @@ export function setupEventListeners() {
       // Service en arrière-plan
       electron.onBackgroundServiceTick((data) => {
         console.log('Background service tick:', data);
-        // Ici, vous pouvez ajouter la logique pour gérer les ticks du service
       });
 
       // Favoris
       electron.onAddToFavorites((playerId) => {
         console.log('Player added to favorites:', playerId);
-        // Ici, vous pouvez ajouter la logique pour gérer l'ajout aux favoris
       });
 
       // Détails du joueur
       electron.onViewPlayerDetails((playerId) => {
         console.log('View player details:', playerId);
-        // Ici, vous pouvez ajouter la logique pour afficher les détails du joueur
       });
 
       // Suppression du joueur
       electron.onDeletePlayer((playerId) => {
         console.log('Delete player:', playerId);
-        // Ici, vous pouvez ajouter la logique pour supprimer le joueur
       });
     }
   } catch (error) {

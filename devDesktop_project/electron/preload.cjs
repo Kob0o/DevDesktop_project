@@ -61,5 +61,9 @@ contextBridge.exposeInMainWorld('electron', {
   onBackgroundServiceTick: (callback) => safeIpcOn('background-service-tick', callback),
   onAddToFavorites: (callback) => safeIpcOn('add-to-favorites', callback),
   onViewPlayerDetails: (callback) => safeIpcOn('view-player-details', callback),
-  onDeletePlayer: (callback) => safeIpcOn('delete-player', callback)
+  onDeletePlayer: (callback) => safeIpcOn('delete-player', callback),
+  
+  // Auto launch
+  getAutoLaunchEnabled: () => safeIpcInvoke('get-auto-launch-enabled'),
+  setAutoLaunchEnabled: (enabled) => safeIpcInvoke('set-auto-launch-enabled', enabled)
 }); 

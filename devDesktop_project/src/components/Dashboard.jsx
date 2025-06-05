@@ -284,111 +284,65 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-dark-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-football-green"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Mes Joueurs
-        </h1>
-        <div className="flex gap-4">
-          {selectedPlayers.length > 0 && (
-            <button
-              onClick={() => {
-                console.log('Bouton de suppression cliqué');
-                handleDeletePlayers();
-              }}
-              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-            >
-              <TrashIcon className="h-5 w-5 mr-2" />
-              Supprimer ({selectedPlayers.length})
-            </button>
-          )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white drop-shadow">Mes Joueurs</h1>
+        <div className="flex gap-2">
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+            className="football-btn flex items-center gap-2"
           >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Ajouter un joueur
+            <PlusIcon className="h-5 w-5" /> Ajouter un joueur
           </button>
+          {selectedPlayers.length > 0 && (
+            <button
+              onClick={handleDeletePlayers}
+              className="football-btn flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+            >
+              <TrashIcon className="h-5 w-5" /> Supprimer {selectedPlayers.length > 1 ? 'les joueurs sélectionnés' : 'le joueur sélectionné'}
+            </button>
+          )}
         </div>
       </div>
-
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Rechercher un joueur..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        />
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPlayers.map((player) => (
-          <div
-            key={player.id}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col hover:shadow-2xl transition-shadow duration-300 relative"
-          >
-            <div className="absolute top-4 right-4">
-              <input
-                type="checkbox"
-                checked={selectedPlayers.includes(player.id)}
-                onChange={() => handlePlayerSelection(player.id)}
-                className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-            </div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                {player.player_image_url ? (
-                  <img
-                    src={player.player_image_url}
-                    alt={player.name}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-primary-500 shadow-md"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl font-bold border-2 border-gray-300">
-                    <span>{player.name[0]}</span>
-                  </div>
-                )}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    {player.name}
-                    {player.team_image_url && (
-                      <img
-                        src={player.team_image_url}
-                        alt={player.team}
-                        className="w-8 h-8 rounded-full object-cover border border-gray-300 ml-2 shadow"
-                      />
-                    )}
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400 font-medium">{player.team}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">{player.position}</p>
+        {players.map((player) => (
+          <div key={player.id} className="football-card flex flex-col gap-3">
+            <div className="flex items-center gap-4">
+              {player.player_image_url ? (
+                <img src={player.player_image_url} alt={player.name} className="w-16 h-16 rounded-full object-cover border-2 border-football-green" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-2xl font-bold border-2 border-football-green">
+                  <span>{player.name[0]}</span>
                 </div>
+              )}
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{player.name}</h2>
+                <p className="text-gray-600 dark:text-gray-400">{player.team}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">{player.position}</p>
               </div>
               <button
                 onClick={() => toggleFavorite(player.id, player.is_favorite)}
-                className="text-yellow-400 hover:text-yellow-500"
+                className="ml-auto text-football-green hover:text-football-yellow"
               >
-                {player.is_favorite ? (
-                  <StarIconSolid className="h-6 w-6" />
-                ) : (
-                  <StarIcon className="h-6 w-6" />
-                )}
+                {player.is_favorite ? <StarIconSolid className="h-6 w-6" /> : <StarIcon className="h-6 w-6" />}
               </button>
             </div>
-            <p className="mt-2 text-gray-600 dark:text-gray-400 italic min-h-[40px]">{player.notes}</p>
-            <Link
-              to={`/player/${player.id}`}
-              className="mt-4 inline-block text-primary-600 hover:text-primary-700 dark:text-primary-400 font-semibold transition-colors"
-            >
-              Voir le profil complet →
-            </Link>
+            <div className="flex gap-2 mt-2">
+              <Link to={`/player/${player.id}`} className="football-btn-outline">Voir</Link>
+              <button
+                onClick={() => handlePlayerSelection(player.id)}
+                className={`football-btn-outline ${selectedPlayers.includes(player.id) ? 'bg-football-green text-white' : ''}`}
+              >
+                {selectedPlayers.includes(player.id) ? 'Sélectionné' : 'Sélectionner'}
+              </button>
+            </div>
           </div>
         ))}
       </div>

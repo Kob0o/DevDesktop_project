@@ -3,13 +3,13 @@
   height: 100vh;
   margin: 0;
   padding: 0;
-  background-color: #1a1a1a;
+  background: #fff;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #1a1a1a;
+  background: #fff;
 }
 
 .app {
@@ -17,7 +17,11 @@ body {
   height: 100vh;
   margin: 0;
   padding: 0;
-  background-color: #1a1a1a;
+  background: transparent;
+}
+
+.dark #root, .dark body {
+  background: #181c20;
 }
 
 .logo {
@@ -48,8 +52,16 @@ body {
   }
 }
 
-.card {
-  padding: 2em;
+.card, .football-card {
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px 0 rgba(16,24,32,0.08);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+.dark .card, .dark .football-card {
+  background: #23272b;
+  color: #f3f4f6;
+  border: 1px solid #17643b;
 }
 
 .read-the-docs {
