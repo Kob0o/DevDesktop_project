@@ -1,78 +1,77 @@
-Nom : ScoutMaster / Permet à un utilisateur de suivre des joueurs de
-football professionnels. L'objectif est de pouvoir créer une base de données
-personnalisée avec des fiches joueurs, ajouter des notes personnelles,
-consulter leurs statistiques via une API externe, et construire son propre
-classement. L'application utilise l'authentification Google via Supabase, et
-intègre des fonctionnalités système natives (notifications, menu contextuel,
-etc.) ainsi que plusieurs APIs navigateur.
+# ⚽ ScoutMaster – Cahier des charges
 
+## 📝 Description
+**ScoutMaster** est une application de bureau destinée aux passionnés de football souhaitant suivre les performances de joueurs professionnels, créer une équipe personnalisée, des fiches joueurs, ajouter des commentaires et gérer une liste de favoris
 
-## Fonctionnalités
+---
 
-- Authentification via Google
-- Gestion des joueurs (ajout, modification, suppression)
-- Système de favoris
-- Notes personnelles
-- Statistiques des joueurs
-- Thème clair/sombre
-- Notifications système
-- Export des données
-- Menu contextuel
-- Recherche de joueurs
+## 🚀 Objectifs
+- Suivre des joueurs professionnels.
+- Ajouter une ou plusieurs équipes
+- Enregistrer des commentaires et notes personnelles.
+- Organiser un classement personnel avec des favoris.
 
-## Technologies utilisées
+---
 
-- React
-- Electron
-- Tailwind CSS
-- Supabase
+## 🛠️ Technologies utilisées
 
-📝 Cahier des charges – Application ScoutMaster
-1. Objectif
-Développer une application de bureau destinée à des passionnés de football, leur
-permettant de :
-Suivre des joueurs professionnels.
-Enregistrer des commentaires personnels.
-Organiser un classement personnel (favoris).
-2. Technologies
-Frontend : React + tailwind
-Backend / Authentification : Supabase (base de données)
-Application bureau : ElectronJS
-Base de données : Supabase
-3. Fonctionnalités principales
-3.1 Authentification (2 pts)
-Authentification Supabase.
-3.2 CRUD (3 pts)
-Création, lecture, mise à jour et suppression de fiches joueurs personnalisées.
-Ajout de notes/commentaires sur chaque joueur.
-Création d'un classement personnel.
-3.3 Crash Reporter (1 pt)
-Intégration d'un système de crash reporter pour gérer les erreurs en production (ex :
-via Sentry).
-3.4 Interface utilisateur (2 pts)
-Écran de connexion.
-Page de liste des joueurs suivis.
-Page de détail pour chaque joueur (avec statistiques et section de commentaires).
-Interface soignée et fluide.
-3.5 Fonctionnalités Electron natives (3 pts)
-Menu contextuel natif sur clic droit (ex : "ajouter au top 10", "ouvrir profil vidéo").
-Service en arrière-plan vérifiant automatiquement si un joueur a joué récemment.
-Icône dans la barre système (accès rapide aux favoris).
-3.6 APIs navigateur (3 pts)
-Utilisation de 3 APIs système compatibles navigateur :
-Notifications API
-Pour envoyer des rappels ou des alertes (ex : un joueur a joué aujourd'hui, pensez à le noter).
-Clipboard API
-Permet à l'utilisateur de copier rapidement un lien de profil joueur, une vidéo ou une fiche
-d'analyse.
-File System Access API
-Pour permettre l'export d'une fiche joueur personnalisée (en .txt, .json, ou .pdf) vers le disque
-local.
-3.7 Installeur (2 pts)
-Génération d'un installeur pour la plateforme de développement (ex : .exe via
-electron-builder + NSIS).
-3.8 Publication (2 pts)
-Publication sur un gestionnaire de paquets adapté (ex : Scoop pour Windows).
-3.9 Fonctionnalités supplémentaires (2 pts)
-Export de la fiche d'un joueur en PDF.
-Ajout d'un thème clair/sombre.
+| Composant      | Technologie          |
+|----------------|----------------------|
+| Frontend       | React + Tailwind CSS |
+| Backend        | Supabase             |
+| Authentification | Supabase          |
+| Application Desktop | ElectronJS     |
+| Base de données | Supabase           |
+
+---
+
+## 🎯 Fonctionnalités principales
+
+### 3.1 Authentification (2/2 pts)
+- Connexion via Supabase Auth.
+
+### 3.2 Gestion des joueurs (CRUD) (3/3 pts)
+- Création, lecture, modification et suppression de fiches joueurs et équipes
+- Ajout de notes/commentaires personnalisés.
+- Classement personnel via favoris.
+
+### 3.3 Crash Reporter (1/1 pt)
+- Intégration d’un système de gestion des erreurs en production (ex : Sentry).
+
+### 3.4 Interface utilisateur (1.5/2 pts)
+- Écran de connexion.
+- Liste des joueurs suivis.
+- Liste des équipes créés
+- Page de détail de chaque joueur avec :
+  - Notes personnelles
+- Interface soignée, fluide, avec design responsive.
+
+### 3.5 Fonctionnalités Electron natives (3/3 pts)
+- **Menu contextuel natif** (clic droit) avec options comme :
+  - Boite de dialogue pour télécharger un pdf et modifier le nom etc
+- **AutoLaunch** Lancement de l'application au démarrage de l'ordinateur
+- **file system** Pour le téléchargement du PDF (avec fs)
+
+### 3.6 APIs navigateur (1/3 pts)
+- **Clipboard API** : copier rapidement des liens (profil, vidéo, fiche).
+- (-2) : Manque API naviguateur
+
+### 3.7 Installeur (2/2 pts)
+- Création d’un installeur pour MAC (ex : `.dmg` via Electron Builder).
+
+### 3.8 Publicatio Gestionnaire de paquets (0/2 pts)
+- NOK
+
+### 3.9 Fonctionnalités supplémentaires (2/2 pts)
+- Toast pour les notifications de susccès ou d'échec
+- Thème clair / sombre pour l’interface.
+
+Total : 15/20pts
+
+---
+
+## 📦 Livraison
+- Fichier `.exe` pour Windows via installeur NSIS.
+- Distribution via gestionnaire de paquets (Scoop). -> NOK
+- Export des données utilisateur localement (JSON, PDF). 
+
